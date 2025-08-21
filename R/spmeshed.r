@@ -567,7 +567,7 @@ spmeshed <- function(y, x, coords, k=NULL,
   
   osix <- order(sort_ix)
   #osix[is.na(sort_ix)] <- NA
-  osix <- osix[!is.na(sort_ix)] - 1
+  osix <- osix[!is.na(sort_ix)]
   
   
   comp_time <- system.time({
@@ -578,8 +578,6 @@ spmeshed <- function(y, x, coords, k=NULL,
                               block_names, block_groups,
                               
                               indexing,
-                          
-                              osix,
                               
                               set_unif_bounds,
                               beta_Vi, 
@@ -622,7 +620,10 @@ spmeshed <- function(y, x, coords, k=NULL,
                               sample_lambda,
                               sample_theta, sample_w) 
     })
-  
+
+  results$yhat_mcmc = results$yhat_mcmc[osix, , , drop = FALSE]
+  results$v_mcmc = results$v_mcmc[osix, , , drop = FALSE]
+
   rownames(results$theta_mcmc) <- theta_names
   colnames(results$theta_mcmc) <- paste0("process", 1:k)
   
@@ -633,8 +634,6 @@ spmeshed <- function(y, x, coords, k=NULL,
       names(anonList) <- as.character(substitute(list(...)))[-1]
       anonList
     }
-    
-    osix <- osix+1
     
     imtellingyou <- "saved data may be ordered differently from input data, use carefully"
     saved <- listN(y, x, coords_blocking, k,

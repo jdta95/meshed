@@ -26,8 +26,6 @@ Rcpp::List meshed_mcmc(
     
     const arma::field<arma::uvec>& indexing,
     
-    const arma::uvec& osix,
-    
     const arma::mat& set_unif_bounds_in,
     const arma::mat& beta_Vi,
     
@@ -268,7 +266,7 @@ Rcpp::List meshed_mcmc(
       if(mx >= 0){
         arma::mat lambdasign = arma::sign(lambda_transf_back);
         
-        arma::mat v_temp = msp.w.rows(osix) * arma::diagmat(lambdasign.diag());
+        arma::mat v_temp = msp.w * arma::diagmat(lambdasign.diag());
 
         arma::mat vcov = arma::cov(v_temp);
         vcov_mcmc.slice(w_saved) = vcov;
@@ -301,7 +299,7 @@ Rcpp::List meshed_mcmc(
           Rcpp::RNGScope scope;
           msp.predicty();
           //yhat_mcmc[iname] = Rcpp::wrap(yh);
-          yhat_mcmc.slice(mcmc_saved) = msp.yhat.rows(osix);
+          yhat_mcmc.slice(mcmc_saved) = msp.yhat;
           
           mcmc_ix(mcmc_saved) = w_saved;
           
