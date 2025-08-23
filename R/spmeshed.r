@@ -9,7 +9,7 @@ spmeshed <- function(y, x, coords, k=NULL,
              verbose = 0,
              predict_everywhere = FALSE,
              settings = list(adapting=TRUE, cache=NULL, 
-                                ps=TRUE, saving=TRUE, low_mem=FALSE, hmc=0),
+                                ps=TRUE, saving=TRUE, hmc=0),
              prior = list(beta=NULL, tausq=NULL, sigmasq = NULL,
                           phi=NULL, a=NULL, nu = NULL,
                           toplim = NULL, btmlim = NULL, set_unif_bounds=NULL),
@@ -50,7 +50,6 @@ spmeshed <- function(y, x, coords, k=NULL,
     mcmc_verbose     <- debug$verbose %>% set_default(FALSE)
     mcmc_debug       <- debug$debug %>% set_default(FALSE)
     saving <- settings$saving %>% set_default(TRUE)
-    low_mem <- settings$low_mem %>% set_default(FALSE)
     
     debugdag <- debug$dag %>% set_default(1)
     
@@ -613,7 +612,6 @@ spmeshed <- function(y, x, coords, k=NULL,
                               
                               mcmc_verbose, mcmc_debug, # verbose, debug
                               mcmc_print_every, # print all iter
-                              low_mem,
                               # sampling of:
                               # beta tausq sigmasq theta w
                               sample_beta, sample_tausq, 

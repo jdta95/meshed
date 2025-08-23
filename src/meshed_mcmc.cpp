@@ -61,7 +61,6 @@ Rcpp::List meshed_mcmc(
     bool verbose=false,
     bool debug=false,
     int print_every=false,
-    bool low_mem=false,
     
     bool sample_beta=true,
     bool sample_tausq=true,
@@ -156,13 +155,6 @@ Rcpp::List meshed_mcmc(
   
   arma::cube v_mcmc = arma::zeros(msp.w.n_rows, k, mcmc_keep);
   arma::cube yhat_mcmc = arma::zeros(msp.y.n_rows, q, mcmc_keep);
-  
-  arma::cube w_mcmc;
-  arma::cube lp_mcmc;
-  if(!low_mem){
-    w_mcmc = arma::zeros(msp.w.n_rows, q, mcmc_keep);
-    lp_mcmc = arma::zeros(msp.w.n_rows, q, mcmc_keep);
-  }
   
   bool acceptable = false;
   if(mcmc > 0){
