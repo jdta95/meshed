@@ -332,7 +332,12 @@ spmeshed <- function(y, x, coords, k=NULL,
     }
     
     if(is.null(prior$phi)){
-      stop("Need to specify the limits on the Uniform prior for phi via prior$phi.")
+      # trying to set some defaults based on coordinate system
+      D <- sqrt(sum(apply(coords, 2, \(cx) diff(range(cx))^2))) 
+      phi_lower <- 1 / D
+      phi_upper <- 100 / D
+      prior$phi <- c(phi_lower, phi_upper)
+      cat("Prior on spatial decay(s) defaulted to U[", phi_lower, ", ", phi_upper, "]\n")
     }
     phi_limits <- prior$phi
     if(is.null(starting$phi)){
@@ -624,9 +629,10 @@ spmeshed <- function(y, x, coords, k=NULL,
 
   rownames(results$theta_mcmc) <- theta_names
   colnames(results$theta_mcmc) <- paste0("process", 1:k)
-
-  caching_info = results$caching_info
-  results$caching_info = NULL
+  
+  nonuser_results <- c("lambda_raw_mcmc", "theta_raw_mcmc", "v_mcmc",
+                       "vcov_mcmc", "paramsd", "caching_info")
+  user_results <- setdiff(names(results), nonuser_results)
   
   if(saving){
     
@@ -660,9 +666,7 @@ spmeshed <- function(y, x, coords, k=NULL,
       start_tausq,
       
       mcmc_mh_sd,
-      
       mcmc_keep, mcmc_burn, mcmc_thin,
-      
       mcmc_startfrom,
       
       n_threads,
@@ -679,17 +683,16 @@ spmeshed <- function(y, x, coords, k=NULL,
       sample_beta, sample_tausq, 
       sample_lambda,
       sample_theta, sample_w,
-      fixed_thresholds,
-      # imtellingyou,
-      caching_info
+      fixed_thresholds
+      # imtellingyou
       )
   } else {
     saved <- "Model data not saved."
   }
   
-  returning <- list(#coordsdata = coordsdata,
-                    savedata = saved) %>% 
-    c(results)
+  returning <- list(coordsdata = coords_blocking,
+                    savedata = c(saved, results[nonuser_results])) %>% 
+    c(results[user_results])
   
   class(returning) <- "spmeshed"
   
