@@ -16,7 +16,7 @@ spmeshed(y, x, coords, k=NULL,
        verbose = 0,
        predict_everywhere = FALSE,
        settings = list(adapting=TRUE, forced_grid=NULL, 
-                          cache=NULL, ps=TRUE, saving=TRUE, hmc=4),
+                          cache=NULL, ps=TRUE, saving=TRUE, hmc=0),
        prior = list(beta=NULL, tausq=NULL, sigmasq = NULL,
                           phi=NULL, a=NULL, nu = NULL,
                           toplim = NULL, btmlim = NULL, set_unif_bounds=NULL),
@@ -46,12 +46,12 @@ spmeshed(y, x, coords, k=NULL,
 
 \item{block_size}{integer approximate size of the blocks after domain partitioning. Only used if \code{axis_partition} is not specified.}
 
-\item{grid_size}{integer vector of size \eqn{d}: number of 'knots' of the reference grid along each axis. 
-This grid is then partitioned using either \code{axis_partition} or \code{block_size}.
-If unspecified, this is set so that the eventual grid size is close to \eqn{n}.
-This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
+% \item{grid_size}{integer vector of size \eqn{d}: number of 'knots' of the reference grid along each axis. 
+% This grid is then partitioned using either \code{axis_partition} or \code{block_size}.
+% If unspecified, this is set so that the eventual grid size is close to \eqn{n}.
+% This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
 
-\item{grid_custom}{list with elements \code{grid} and \code{axis_interval_partition}. \code{grid} is a data.frame with the user supplied grid of knots. It is possible to include covariate values for the grid locations as additional columns, as long as their number matches \code{ncol(x)} - this is useful to make raster images of predictions. \code{axis_interval_partition} is the user supplied set of cuts for each coordinate axis (Note: these are the actual cutpoints along the axes, not the number of cuts). If left empty, \code{axis_partition} will be used to partition the custom grid. No checks are made on the validity of this grid. This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
+% \item{grid_custom}{list with elements \code{grid} and \code{axis_interval_partition}. \code{grid} is a data.frame with the user supplied grid of knots. It is possible to include covariate values for the grid locations as additional columns, as long as their number matches \code{ncol(x)} - this is useful to make raster images of predictions. \code{axis_interval_partition} is the user supplied set of cuts for each coordinate axis (Note: these are the actual cutpoints along the axes, not the number of cuts). If left empty, \code{axis_partition} will be used to partition the custom grid. No checks are made on the validity of this grid. This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
 
 \item{n_samples}{integer number of MCMC samples at which all the unknowns are stored (including the latent effects).}
 
@@ -65,11 +65,24 @@ This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the
 
 \item{predict_everywhere}{bool used if settings$forced_grid=T. Should predictions be made at the reference grid locations? If not, predictions will be made only at the supplied NA values of Y.}
 
-\item{settings}{list: \code{settings$adapting} turns the adaptation of MCMC on/off, \code{settings$forced_grid} determines whether or not to use the data grid or a forced grid; if unspecified, the function will try to see what the data look like. Note: if \code{forced_grid=FALSE} and \eqn{n} is very large and \eqn{coords} are irregularly spaced, then expect slowdowns in preprocessing and consider using \code{forced_grid=TRUE} instead. \code{settings$saving} will save model data if set to \code{TRUE}. \code{settings$ps} (default \code{TRUE}) determines whether to use the PS parametrization (Peruzzi et al 2021). \code{settings$hmc}, used if any outcome is not Gaussian, (1: MALA, 2: NUTS, 3: RM-MALA, 4: Simplified manifold preconditioning (default))}
+\item{settings}{list: \code{settings$adapting} turns the adaptation of MCMC on/off. \code{settings$saving} will save model data if set to \code{TRUE}. \code{settings$ps} (default \code{TRUE}) determines whether to use the PS parametrization (Peruzzi et al 2021). \code{settings$hmc}, used if any outcome is not Gaussian, (1: MALA, 2: NUTS, 3: RM-MALA, 4: Simplified manifold preconditioning (defaults to 4 when any outcome is not Gaussian))}
 
-\item{prior}{list: setup for priors of unknown parameters. \code{prior$phi} needs to be specified as the support of the Uniform prior for \eqn{\phi}. There is currently limited functionality here and some inputs are currently ignored. Defaults are: a vague Gaussian for \eqn{\beta}, \eqn{\tau^2_i \sim IG(2,1)}, \eqn{\theta_j \sim IG(2,2)}, all subject to change.}
+\item{prior}{list: setup for priors of unknown parameters. \code{prior$phi} needs to be specified as the support of the Uniform prior for \eqn{\phi}.
+Other prior hyperparameters which may be specified include \code{beta}, \code{tausq}, \code{lambda_prec}, \code{sigmasq}, and \code{nu}.
+\code{phi} takes a vector of length 2 with the lower and upper bounds of the Uniform prior for \eqn{\phi}, respectively.
+\code{beta} takes a diagonal \eqn{p \times p} matrix where each element of the diagonal is the prior precision for the corresponding coefficient. Default is a vague Gaussian prior.
+\code{tausq} takes a vector of length 2 with the shape and scale parameters of the Inverse-Gamma prior for each \eqn{\tau^2_i}. Default is \code{c(2,1)}.
+\code{lambda_prec} takes a positive numeric value for the prior precision of \eqn{\Lambda}. Default is \code{1}.
+\code{sigmasq} takes a vector of length 2 with the shape and scale parameters of the Inverse-Gamma prior for each \eqn{\theta_j}. Default is \code{c(2,1)}.
+\code{nu} takes a vector of length 2 with the lower and upper bounds of the Uniform prior for \eqn{\nu}, respectively.
+Note posterior sampling of \eqn{nu} (Matern smoothness) is not supported when \eqn{q > 1}. Refer to Genton and Kleibler (2015) for a theoretical justification. Fix \eqn{nu} instead.}
+%\item{prior}{list: setup for priors of unknown parameters. \code{prior$phi} needs to be specified as the support of the Uniform prior for \eqn{\phi}. There is currently limited functionality here and some inputs are currently ignored. Defaults are: a vague Gaussian for \eqn{\beta}, \eqn{\tau^2_i \sim IG(2,1)}, \eqn{\theta_j \sim IG(2,1)}, all subject to change.}
 
-\item{starting}{list: setup for starting values of unknown parameters. \code{starting$mcmcsd} is the initial standard deviation of proposals. \code{starting$mcmc_startfrom} is input to the adaptive MCMC and can be used to manually restart MCMC. There is currently limited functionality here and some parameters may be ignored.}
+\item{starting}{list: setup for starting values of unknown parameters.
+\code{starting$mcmcsd} is the initial standard deviation of proposals.
+\code{starting$mcmc_startfrom} is input to the adaptive MCMC and can be used to manually restart MCMC.
+Other starting values that can be specified include \code{starting$beta}, \code{starting$theta}, \code{starting$tausq}, \code{starting$lambda}, and \code{starting$v}.}
+%\item{starting}{list: setup for starting values of unknown parameters. \code{starting$mcmcsd} is the initial standard deviation of proposals. \code{starting$mcmc_startfrom} is input to the adaptive MCMC and can be used to manually restart MCMC. There is currently limited functionality here and some parameters may be ignored.}
 
 \item{debug}{list: setup for debugging things. Some parts of MCMC can be turned off here.}
 \item{indpart}{bool defaults to \code{FALSE}. If \code{TRUE}, this computes an independent partition model.}
@@ -82,17 +95,20 @@ where \eqn{y(s)} is a \eqn{q}-dimensional vector of outcomes at spatial location
 }
 
 \value{
-\item{coordsdata}{data.frame including the original \eqn{n} coordinates plus the \eqn{n_g} knot coordinates if the model was run on a forced grid. The additional column \code{forced_grid} has value 1 if the corresponding coordinate is a knot in the forced grid. See examples.}
 \item{savedata}{Available if \code{settings$saving==TRUE}. Needed for making predictions using \code{predict()} after MCMC. Note: \code{NA} values of the output are automatically and more efficiently predicted when running \code{spmeshed}.}
-\item{yhat_mcmc}{list of length \code{n_samples} whose elements are matrices with \eqn{n + n_g} rows and \eqn{q} columns. Each matrix in the list is a posterior predictive sample of the latent spatial process. \eqn{n_g = 0} if the data grid is being used. Given the possibly large \eqn{n}, only the thinned chain is output for \eqn{y}.}
-\item{v_mcmc}{list of length \code{n_samples} whose elements are matrices with \eqn{n + n_g} rows and \eqn{k} columns. Each matrix in the list is a posterior sample of the \eqn{k} latent spatial process. \eqn{n_g = 0} if the data grid is being used. Given the possibly large \eqn{n}, only the thinned chain is output for \eqn{v}.}
+\item{yhat_mcmc}{array of size \code{(n, q, n_samples)}. The rows correspond to \eqn{n} locations (including \code{NA} values in \code{y}), the columns to \eqn{q} outcomes, and the slices to \code{n_samples} posterior predictive samples of the latent spatial process. The row order of locations matches the input data. Given the possibly large \eqn{n}, only the thinned chain is output for \eqn{y}.}
+\item{v_mcmc}{array of size \code{(n, k, n_samples)}. The rows correspond to \eqn{n} locations (including \code{NA} values in \code{y}), the columns to \eqn{k}-dimensional latent process used for LMC, and the slices to \code{n_samples} posterior samples of the latent spatial process. The row order of locations matches the input data. Given the possibly large \eqn{n}, only the thinned chain is output for \eqn{v}.}
+\item{w_mean_mcmc}{matrix of size \code{(q, n_thin*n_samples)}. Each row is the full MCMC chain for the mean latent spatial process across all \eqn{n} locations for the \eqn{j}th outcome. The full chain minus burn-in is returned NOT thinned since \code{q} is relatively small.}
 \item{beta_mcmc}{array of size \code{(p, q, n_thin*n_samples)} with the posterior sample for the static regression coefficients \eqn{\beta}. The \eqn{j}th column of each matrix (\eqn{p} rows and \eqn{q} columns) corresponds to the \eqn{p} linear effects on the \eqn{j}th outcome. The full chain minus burn-in is returned NOT thinned since \code{p} and \code{q} are relatively small.}
-\item{tausq_mcmc}{matrix of size \code{(q, n_thin*n_samples)}. Each row corresponds to the full MCMC chain for the nugget \eqn{\tau^2_j} of the \eqn{j}th outcome in the coregionalization/factor model. The full chain minus burn-in is returned NOT thinned since \code{q} is relatively small.}
-\item{theta_mcmc}{array of size \code{(h, k, n_thin*n_samples)} with the posterior sample for the correlation function parameters \eqn{\theta}. \code{h} is 2 for spatial data (corresponding to the spatial decay of the exponential covariance (\eqn{\phi_i, i=1, \dots, k}), and the variance \eqn{\sigma^2_i, i=1, \dots, k}), 4 for spacetime data (corresponding to temporal decay, spatial decay, and separability -- these are referred to as \eqn{a_i}, \eqn{\phi_i}, and \eqn{\beta_i, i=1, \dots, k}, in Gneiting (2002), see \doi{10.1198/016214502760047113}, plus the variance \eqn{\sigma^2, i=1, \dots, k}). The full chain minus burn-in is returned NOT thinned since \code{h} and \code{k} are relatively small. If \code{settings$ps=TRUE}, the MCMC output for \eqn{\sigma^2_i} (last row of \code{theta_mcmc}) should be discarded and \eqn{\Lambda} used instead.}
-\item{lambda_mcmc}{array of size \code{(q, k, n_thin*n_samples)}. Each matrix (of size \eqn{(q,k)}) is a posterior sample for \eqn{\Lambda} in the coregionalization/factor model. In univariate models, this is usually called \eqn{\sigma}. The full chain minus burn-in is returned NOT thinned since \code{q} and \code{k} are relatively small.}
+\item{tausq_mcmc}{matrix of size \code{(q, n_thin*n_samples)}. Each row is the full MCMC chain for the nugget \eqn{\tau^2_j} of the \eqn{j}th outcome in the coregionalization/factor model. The full chain minus burn-in is returned NOT thinned since \code{q} is relatively small.}
+\item{theta_mcmc}{array of size \code{(h, k, n_thin*n_samples)} with the posterior sample for the correlation function parameters \eqn{\theta}. \code{h} is 2 for spatial data (corresponding to the spatial decay of the exponential covariance (\eqn{\phi_i, i=1, \dots, k}), and the variance \eqn{\sigma^2_i, i=1, \dots, k}), 4 for spacetime data (corresponding to temporal decay, spatial decay, and separability -- these are referred to as \eqn{a_i}, \eqn{\phi_i}, and \eqn{\beta_i, i=1, \dots, k}, in Gneiting (2002), see \doi{10.1198/016214502760047113}, plus the variance \eqn{\sigma^2, i=1, \dots, k}). The full chain minus burn-in is returned NOT thinned since \code{h} and \code{k} are relatively small.}
+\item{lambda_mcmc}{array of size \code{(q, k, n_thin*n_samples)}. Each matrix (of size \eqn{(q,k)}) is a posterior sample for \eqn{\Lambda} in the coregionalization/factor model. The full chain minus burn-in is returned NOT thinned since \code{q} and \code{k} are relatively small.}
+\item{vcov_mcmc}{array of size \code{(k, k, n_thin*n_samples)}}. Each matrix (of size \eqn{(k,k)}) is a posterior sample for the empirical covariance matrix of the \eqn{k}-dimensional latent process. The full chain minus burn-in is returned NOT thinned since \code{k} is relatively small.
 \item{paramsd}{Cholesky factorization of the proposal covariance for adaptive MCMC, after adaptation.}
 \item{mcmc}{Total number of MCMC iterations performed.}
 \item{mcmc_time}{Time in seconds taken for MCMC (not including preprocessing).}
+\item{mcmc_ix}{Vector containing indices of the \code{n_samples} MCMC samples (not including burn-in) retained after thinning.}
+\item{success}{Logical indicating whether MCMC completed without errors. If \code{FALSE}, the output chains may be invalid. Used when making predictions using \code{predict()}.}
 }
 
 \references{

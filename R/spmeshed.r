@@ -624,6 +624,9 @@ spmeshed <- function(y, x, coords, k=NULL,
 
   rownames(results$theta_mcmc) <- theta_names
   colnames(results$theta_mcmc) <- paste0("process", 1:k)
+
+  caching_info = results$caching_info
+  results$caching_info = NULL
   
   if(saving){
     
@@ -633,7 +636,7 @@ spmeshed <- function(y, x, coords, k=NULL,
       anonList
     }
     
-    imtellingyou <- "saved data may be ordered differently from input data, use carefully"
+    # imtellingyou <- "saved data may be ordered differently from input data, use carefully"
     saved <- listN(y, x, coords_blocking, k,
                    osix,
                    family,
@@ -676,7 +679,10 @@ spmeshed <- function(y, x, coords, k=NULL,
       sample_beta, sample_tausq, 
       sample_lambda,
       sample_theta, sample_w,
-      fixed_thresholds, imtellingyou)
+      fixed_thresholds,
+      # imtellingyou,
+      caching_info
+      )
   } else {
     saved <- "Model data not saved."
   }

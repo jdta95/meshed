@@ -177,7 +177,7 @@ Rcpp::List meshed_mcmc(
   
   
   start_all = std::chrono::steady_clock::now();
-  int m=0; int mx=0; int num_chol_fails=0;
+  int m=0; int mx=0; // int num_chol_fails=0;
   int mcmc_saved = 0; int w_saved = 0;
   
   try {
@@ -404,7 +404,7 @@ Rcpp::List meshed_mcmc(
       Rcpp::Named("paramsd") = msp.theta_adapt.paramsd,
       Rcpp::Named("mcmc") = mcmc,
       Rcpp::Named("mcmc_time") = mcmc_time/1000.0,
-      Rcpp::Named("proposal_failures") = num_chol_fails,
+      // Rcpp::Named("proposal_failures") = num_chol_fails,
       Rcpp::Named("caching_info") = caching_info,
       Rcpp::Named("mcmc_ix") = mcmc_ix,
       Rcpp::Named("success") = true
@@ -430,7 +430,7 @@ Rcpp::List meshed_mcmc(
       Rcpp::Named("paramsd") = msp.theta_adapt.paramsd,
       Rcpp::Named("mcmc") = mcmc,
       Rcpp::Named("mcmc_time") = mcmc_time/1000.0,
-      Rcpp::Named("proposal_failures") = num_chol_fails,
+      // Rcpp::Named("proposal_failures") = num_chol_fails,
       Rcpp::Named("caching_info") = caching_info,
       Rcpp::Named("mcmc_ix") = mcmc_ix,
       Rcpp::Named("success") = false
