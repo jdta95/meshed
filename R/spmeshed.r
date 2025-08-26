@@ -690,7 +690,7 @@ spmeshed <- function(y, x, coords, k=NULL,
     saved <- "Model data not saved."
   }
   
-  returning <- list(coordsdata = coords_blocking,
+  returning <- list(coordsdata = coords_blocking[osix,],
                     savedata = c(saved, results[nonuser_results])) %>% 
     c(results[user_results])
   
