@@ -7,16 +7,14 @@ spmeshed(y, x, coords, k=NULL,
        family = "gaussian",
        axis_partition = NULL, 
        block_size = 30,
-       grid_size = NULL,
-       grid_custom = NULL,
        n_samples = 1000,
        n_burnin = 100,
        n_thin = 1,
        n_threads = 4,
        verbose = 0,
        predict_everywhere = FALSE,
-       settings = list(adapting=TRUE, forced_grid=NULL, 
-                          cache=NULL, ps=TRUE, saving=TRUE, hmc=0),
+       settings = list(adapting=TRUE, cache=NULL, 
+                          ps=TRUE, saving=TRUE, hmc=0),
        prior = list(beta=NULL, tausq=NULL, sigmasq = NULL,
                           phi=NULL, a=NULL, nu = NULL,
                           toplim = NULL, btmlim = NULL, set_unif_bounds=NULL),
@@ -45,13 +43,6 @@ spmeshed(y, x, coords, k=NULL,
 \item{axis_partition}{integer vector of size \eqn{d}: number of intervals each coordinate axis is split into}
 
 \item{block_size}{integer approximate size of the blocks after domain partitioning. Only used if \code{axis_partition} is not specified.}
-
-% \item{grid_size}{integer vector of size \eqn{d}: number of 'knots' of the reference grid along each axis. 
-% This grid is then partitioned using either \code{axis_partition} or \code{block_size}.
-% If unspecified, this is set so that the eventual grid size is close to \eqn{n}.
-% This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
-
-% \item{grid_custom}{list with elements \code{grid} and \code{axis_interval_partition}. \code{grid} is a data.frame with the user supplied grid of knots. It is possible to include covariate values for the grid locations as additional columns, as long as their number matches \code{ncol(x)} - this is useful to make raster images of predictions. \code{axis_interval_partition} is the user supplied set of cuts for each coordinate axis (Note: these are the actual cutpoints along the axes, not the number of cuts). If left empty, \code{axis_partition} will be used to partition the custom grid. No checks are made on the validity of this grid. This parameter is ignored if \code{settings$forced_grid=FALSE} in which case the data are assumed to be on a grid.}
 
 \item{n_samples}{integer number of MCMC samples at which all the unknowns are stored (including the latent effects).}
 

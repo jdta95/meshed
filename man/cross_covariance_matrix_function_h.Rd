@@ -12,7 +12,7 @@ cross_covariance_matrix_function_h(spmeshed_object, distance = 0, correl = FALSE
     \item{num_threads}{Integer number of OpenMP threads. This is ineffective if \code{meshed} was not compiled with OpenMP support.}
 }
 \value{
-    An array of size \eqn{(q, q, n_thin*n_samples)} containing the cross-covariance/cross-correlation matrix at each MCMC iteration The full chain minus burn-in is returned NOT thinned since \code{q} is relatively small.
+    An array of size \code{(q, q, n_thin*n_samples)} containing the cross-covariance/cross-correlation matrix at each MCMC iteration The full chain minus burn-in is returned NOT thinned since \code{q} is relatively small.
     }
 
 \references{
@@ -33,8 +33,8 @@ cross_covariance_matrix_function_h(spmeshed_object, distance = 0, correl = FALSE
 \examples{
 # toy example with small dataset and short MCMC
 # on a bivariate outcome
-library(tidyverse)
-library(meshed, lib.loc = "../temp")
+library(magrittr)
+library(meshed)
 
 set.seed(2021)
 
