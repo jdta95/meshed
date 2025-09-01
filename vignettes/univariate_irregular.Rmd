@@ -94,26 +94,13 @@ mcmc_keep <- 200 # too small! this is just a vignette.
 mcmc_burn <- 400
 mcmc_thin <- 2
 
-mesh1_total_time <- system.time({
-  meshout1 <- spmeshed(y, X, coords,
+mesh_total_time <- system.time({
+  meshout <- spmeshed(y, X, coords,
                       block_size = 25, 
                       n_samples = mcmc_keep, n_burn = mcmc_burn, n_thin = mcmc_thin, 
                       n_threads = 2,
                       verbose = 0,
-                      settings=list(forced_grid=FALSE, cache=FALSE),
-                      prior=list(phi=c(1,30))
-  )})
-```
-
-And now with the gridded knots. We build a grid with as many knots as there are observations, but we could use a smaller or a bigger one.
-```{r}
-mesh2_total_time <- system.time({
-  meshout2 <- spmeshed(y, X, coords,
-                      grid_size = c(30, 30),
-                      block_size = 25,
-                      n_samples = mcmc_keep, n_burn = mcmc_burn, n_thin = mcmc_thin, 
-                      n_threads = 2,
-                      verbose = 0,
+                      settings=list(cache=FALSE),
                       prior=list(phi=c(1,30))
   )})
 ```
@@ -121,32 +108,29 @@ mesh2_total_time <- system.time({
 Post-processing proceeds the same way as when the data locations are on a grid. Let's do that for the second model.
 
 ```{r}
-summary(meshout2$lambda_mcmc[1,1,]^2)
-summary(meshout2$theta_mcmc[1,1,])
-summary(meshout2$tausq_mcmc[1,])
-summary(meshout2$beta_mcmc[1,1,])
+summary(meshout$theta_mcmc["sigmasq",,])
+summary(meshout$theta_mcmc["phi",1,])
+summary(meshout$tausq_mcmc[1,])
+summary(meshout$beta_mcmc[1,1,])
 ```
 We proceed to plot predictions across the domain along with the recovered latent effects. We plot the predictions at the input locations, i.e. the points not on the grid of knots, which we find via `forced_grid==0`. We plot the recovered latent process on the grid, for a nicer picture.
 
 ```{r}
-# process means
-wmesh <- data.frame(w_mgp = meshout2$w_mcmc %>% summary_list_mean())
-# predictions
-ymesh <- data.frame(y_mgp = meshout2$yhat_mcmc %>% summary_list_mean())
+# recover latent effects and calculate means
+wmesh <- recover_W(meshout) %>% apply(1, mean)
 
-outdf <- meshout2$coordsdata %>% 
-  cbind(wmesh, ymesh) %>%
-  left_join(simdata)
+# calculate yhat means
+ymesh <- meshout$yhat_mcmc %>% apply(1, mean)
 
-outdf %>% filter(forced_grid==1) %>%
-    ggplot(aes(Var1, Var2, fill=w_mgp)) +
-    geom_raster() +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = wmesh)) + 
+    geom_point() +
     scale_fill_viridis_c() +
     theme_minimal() + ggtitle("w: recovered")
 
-outdf %>% filter(forced_grid==0) %>%
-    ggplot(aes(Var1, Var2, color=y_mgp)) +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = ymesh)) +
     geom_point() +
-    scale_color_viridis_c() +
+    scale_fill_viridis_c() +
     theme_minimal() + ggtitle("y: predictions")
 ```

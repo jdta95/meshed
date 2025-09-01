@@ -90,7 +90,6 @@ mcmc_thin <- 2
 mesh_total_time <- system.time({
   meshout <- spmeshed(y, X, coords,
                       family="poisson",
-                      grid_size=c(20, 20),
                       block_size = 20,
                       n_samples = mcmc_keep, n_burn = mcmc_burn, n_thin = mcmc_thin, 
                       n_threads = 16,
@@ -103,31 +102,28 @@ $$ log(\eta) = X \beta + \lambda w, $$
 where $w\sim MGP$ has unitary variance. This model is equivalent to the previous one and in fact we find $\sigma^2=\lambda^2$. Naturally, it is much more difficult to estimate parameters when data are counts.
 
 ```{r}
-summary(meshout$lambda_mcmc[1,1,]^2)
-summary(meshout$theta_mcmc[1,1,])
+summary(meshout$theta_mcmc["sigmasq",,])
+summary(meshout$theta_mcmc["phi",1,])
 summary(meshout$beta_mcmc[1,1,])
 ```
 We proceed to plot predictions across the domain along with the recovered latent effects. We plot the latent effects at the grid we used for fitting `spmeshed`. Instead, we plot our predictions at the original data locations. We may see some pattern by plotting the data on the log scale.
 
 ```{r}
-# process means
-wmesh <- data.frame(w_mgp = meshout$w_mcmc %>% summary_list_mean())
-# predictions
-ymesh <- data.frame(y_mgp = meshout$yhat_mcmc %>% summary_list_mean())
+# recover latent effects and calculate means
+wmesh <- recover_W(meshout) %>% apply(1, mean)
 
-outdf <- meshout$coordsdata %>% 
-  cbind(wmesh, ymesh) %>%
-  left_join(simdata, by = c("Var1", "Var2"))
+# calculate yhat means
+ymesh <- meshout$yhat_mcmc %>% apply(1, mean)
 
-outdf %>% filter(forced_grid==1) %>%
-    ggplot(aes(Var1, Var2, fill=w_mgp)) +
-    geom_raster() +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = wmesh)) + 
+    geom_point() +
     scale_fill_viridis_c() +
     theme_minimal() + ggtitle("w: recovered")
 
-outdf %>% filter(forced_grid==0) %>%
-    ggplot(aes(Var1, Var2, color=y_mgp)) +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = ymesh)) +
     geom_point() +
-    scale_color_viridis_c() +
+    scale_fill_viridis_c() +
     theme_minimal() + ggtitle("y: predictions")
 ```
