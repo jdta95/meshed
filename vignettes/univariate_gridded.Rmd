@@ -101,33 +101,30 @@ mesh_total_time <- system.time({
 ```
 We can now do some postprocessing of the results. We extract posterior marginal summaries for $\sigma^2$, $\phi$, $\tau^2$, and $\beta_2$. The model that `spmeshed` targets is a slight reparametrization of the above:^[At its core, `spmeshed` implements the spatial factor model $Y(s) = X(s)\beta + \Lambda v(s) + \epsilon(s)$ where $w(s) = \Lambda v(s)$ is modeled via linear coregionalization.]
 $$ y = X \beta + \lambda w + \epsilon, $$
-where $w\sim MGP$ has unitary variance. This model is equivalent to the previous one and in fact we find $\sigma^2=\lambda^2$. 
+where $w\sim MGP$ has unitary variance. This model is equivalent to the previous one. 
 
 ```{r}
-summary(meshout$lambda_mcmc[1,1,]^2)
-summary(meshout$theta_mcmc[1,1,])
+summary(meshout$theta_mcmc["sigmasq",,])
+summary(meshout$theta_mcmc["phi",,])
 summary(meshout$tausq_mcmc[1,])
 summary(meshout$beta_mcmc[1,1,])
 ```
 We proceed to plot predictions across the domain along with the recovered latent effects.
 ```{r}
-# process means
-wmesh <- data.frame(w_mgp = meshout$w_mcmc %>% summary_list_mean())
-# predictions
-ymesh <- data.frame(y_mgp = meshout$yhat_mcmc %>% summary_list_mean())
+# recover latent effects and calculate means
+wmesh <- recover_W(meshout) %>% apply(1, mean)
 
-outdf <- meshout$coordsdata %>% 
-  cbind(wmesh, ymesh) %>%
-  left_join(simdata)
+# calculate yhat means
+ymesh <- meshout$yhat_mcmc %>% apply(1, mean)
 
-outdf %>% 
-    ggplot(aes(Var1, Var2, fill=w_mgp)) +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = wmesh)) + 
     geom_raster() +
     scale_fill_viridis_c() +
     theme_minimal() + ggtitle("w: recovered")
 
-outdf %>% 
-    ggplot(aes(Var1, Var2, fill=y_mgp)) +
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, fill = ymesh)) +
     geom_raster() +
     scale_fill_viridis_c() +
     theme_minimal() + ggtitle("y: predictions")

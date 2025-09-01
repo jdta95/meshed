@@ -106,7 +106,6 @@ mcmc_thin <- 2
 
 mesh_total_time <- system.time({
   meshout <- spmeshed(y=YY, x=XX, coords=coords, k = 2,
-                    grid_size = c(20, 20), 
                     block_size = 16, 
                     n_samples = mcmc_keep, 
                     n_burn = mcmc_burn, 
@@ -146,29 +145,30 @@ plot_cube(meshout$beta_mcmc, ncol(YY), p, Beta, "Beta", T)
 And finally some map of predictions using posterior means.
 ```{r}
 mcmc_summary <- function(x) c(quantile(x, .025), mean(x), quantile(x, .975))
-y_post_sample <- meshout$yhat_mcmc %>% 
-  abind::abind(along=3) %>%
-  apply(1:2, mcmc_summary)
+y_post_sample <- meshout$yhat_mcmc %>% apply(1:2, mcmc_summary)
 
 # posterior mean for 3rd outcome:
-meshout$coordsdata %>% cbind(y_pm_3 = y_post_sample[2,,3]) %>%
-  filter(forced_grid==0) %>%
-  ggplot(aes(Var1, Var2, color=y_pm_3)) +
-  geom_point() +
-  scale_color_viridis_c() +
-  theme_minimal() + theme(legend.position="none")
+class(meshout$coordsdata)
+head(meshout$coordsdata)
+head(coords)
+
+meshout$coordsdata %>%
+  ggplot(aes(Var1, Var2, color = y_post_sample[2,,3])) +
+    geom_point() +
+    scale_color_viridis_c() +
+    theme_minimal() +
+    theme(legend.position="none")
 ```
 
 
 Let's compute the correlation between our predictions for the third outcome at its unobserved locations, and the true values which we generated in the simulated dataset.
 
 ```{r}
-perf <- meshout$coordsdata %>% 
-  cbind(y_pm_3 = y_post_sample[2,,3]) %>%
-  left_join(simdata, by = c("Var1", "Var2"))
+# missing values for 3rd outcome
+pred_ix = is.na(YY[, 3])
 
-perf %>% filter(forced_grid==0, !complete.cases(Outcome_obs.3)) %>% 
-  with(cor(y_pm_3, Outcome_full.3))
+# correlation between predictions and true values for unobserved locations
+cor(y_post_sample[2, pred_ix, 3], YY_full[pred_ix, 3])
 ```
 
 
